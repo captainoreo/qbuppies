@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homebrew Launcher</title>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            background-image: linear-gradient(45deg, #1e3c72 0%, #2a5298 100%);
+        }
+
+        .screen-container {
+            width: 900px;
+            height: 540px;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border: 8px solid #333;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .top-screen {
+            height: 240px;
+            background: linear-gradient(to right, #6dd5ed, #2193b0);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+            border-bottom: 4px solid #333;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .water-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50% / 100% 100% 0 0;
+            animation: wave-movement 10s linear infinite;
+        }
+
+        .wave:nth-child(1) {
+            opacity: 0.6;
+            height: 120px;
+            animation-duration: 12s;
+            animation-delay: -2s;
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, 0);
+        }
+
+        .wave:nth-child(2) {
+            opacity: 0.4;
+            height: 80px;
+            animation-duration: 8s;
+            animation-delay: -5s;
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translate(-25%, 0);
+        }
+
+        @keyframes wave-movement {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .bubble {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            animation: bubble-float linear infinite;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        @keyframes bubble-float {
+            0% {
+                transform: translateY(100px) scale(0);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-200px) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+
+        .top-screen-content {
+            padding: 20px;
+            text-align: center;
+            z-index: 3;
+            position: relative;
+        }
+
+        .top-screen-content h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .top-screen-content p {
+            margin: 5px 0 0;
+            font-size: 0.8em;
+            font-weight: 400;
+            opacity: 0.8;
+        }
+
+        .bottom-screen {
+            flex-grow: 1;
+            background-color: #e0e0e0;
+            border-top: 4px solid #ccc;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .statusbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px;
+            background-color: #c0c0c0;
+            border-bottom: 2px solid #a0a0a0;
+            color: #555;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .statusbar .left, .statusbar .right {
+            display: flex;
+            align-items: center;
+        }
+        .statusbar .icon {
+            margin-right: 5px;
+        }
+
+        .launcher-grid {
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 15px;
+            padding: 15px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .launcher-grid::-webkit-scrollbar {
+            display: none;
+        }
+
+        .app-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .app-icon:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .app-icon:active {
+            transform: scale(0.95);
+        }
+
+        .app-box {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: 2px solid #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 8px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .app-box.selected {
+            border-color: #ff9800;
+            animation: pulse 1s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            from { box-shadow: 0 0 5px #ff9800, 0 0 10px #ff9800; }
+            to { box-shadow: 0 0 10px #ff9800, 0 0 20px #ff9800; }
+        }
+
+        .app-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .app-name {
+            font-size: 0.8em;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .footer-buttons {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            background-color: #d0d0d0;
+            border-top: 2px solid #b0b0b0;
+        }
+
+        .footer-button {
+            padding: 8px 20px;
+            border-radius: 20px;
+            background-color: #607d8b;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .footer-button:hover {
+            background-color: #546e7a;
+            transform: translateY(-2px);
+        }
+
+        .footer-button:active {
+            background-color: #455a64;
+            transform: translateY(0);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="screen-container">
+        <div class="top-screen">
+            <div class="water-effect" id="water-effect">
+                <div class="wave"></div>
+                <div class="wave"></div>
+            </div>
+            <div class="top-screen-content">
+                <h1>Qottlebup Homebrew Launcher</h1>
+                <p>Select the app to see one of the devs and people credited!</p>
+            </div>
+        </div>
+
+        <div class="bottom-screen">
+            <div class="statusbar">
+                <div class="left">
+                    <span class="icon">&#x26A1;</span>
+                    <span>100%</span>
+                </div>
+                <div class="center">
+                    <span>Credits</span>
+                </div>
+                <div class="right">
+                    <span>WiFi</span>
+                    <span class="icon">&#x1F4F6;</span>
+                </div>
+            </div>
+
+            <div class="launcher-grid">
+                <a href="https://chazzie.nekoweb.org" target="_blank" class="app-icon" onclick="selectApp(this)">
+                    <div class="app-box">
+                        <img src="https://qottlebup.nekoweb.org/86106552_60x60.png" alt="Chaz">
+                    </div>
+                    <span class="app-name">Chaz</span>
+                </a>
+                
+                <a href="https://cacy.straw.page/" target="_blank" class="app-icon" onclick="selectApp(this)">
+                    <div class="app-box">
+                        <img src="https://qottlebup.nekoweb.org/images%20(3).jpeg" alt="Cacy">
+                    </div>
+                    <span class="app-name">Cacy</span>
+                </a>
+                
+                <a href="https://scratch.mit.edu/users/scratchcodekiddie/" target="_blank" class="app-icon" onclick="selectApp(this)">
+                    <div class="app-box">
+                        <img src="https://qottlebup.nekoweb.org/101396387_60x60.jpeg" alt="SCK">
+                    </div>
+                    <span class="app-name">SCK</span>
+                </a>
+                
+                <a href="https://qottlebup.nekoweb.org/monkeyjimmy.html" target="_blank" class="app-icon" onclick="selectApp(this)">
+                    <div class="app-box">
+                        <img src="https://qottlebup.nekoweb.org/Monkey.png" alt="MonkeyJimmy">
+                    </div>
+                    <span class="app-name">MonkeyJimmy</span>
+                </a>
+                
+                <a href="https://blamey.nekoweb.org" target="_blank" class="app-icon" onclick="selectApp(this)">
+                    <div class="app-box">
+                        <img src="https://qottlebup.nekoweb.org/glorp.jpeg" alt="Blamey">
+                    </div>
+                    <span class="app-name">Blamey</span>
+                </a>
+                
+                <a href="https://truffled.lol/" target="_blank" class="app-icon" onclick="selectApp(this)">
+                    <div class="app-box">
+                        <img src="https://qottlebup.nekoweb.org/AM64_cat.png" alt="Bog">
+                    </div>
+                    <span class="app-name">Bog</span>
+                </a>
+                
+                <a href="https://burnedwebsite.vercel.app/" target="_blank" class="app-icon" onclick="selectApp(this)">
+                    <div class="app-box">
+                        <img src="https://qottlebup.nekoweb.org/log.png" alt="Burned Popcorn">
+                    </div>
+                    <span class="app-name">Burned Popcorn</span>
+                </a>
+                
+                <a href="https://github.com/DS-Homebrew/TWiLightMenu" target="_blank" class="app-icon" onclick="selectApp(this)">
+                    <div class="app-box">
+                        <img src="https://i.imgur.com/aC71x8U.png" alt="TWLoader">
+                    </div>
+                    <span class="app-name">TWLoader</span>
+                </a>
+            </div>
+
+            <div class="footer-buttons">
+                <button class="footer-button">Start</button>
+                <button class="footer-button">Select</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectApp(element) {
+            const allApps = document.querySelectorAll('.app-icon .app-box');
+            allApps.forEach(app => app.classList.remove('selected'));
+            element.querySelector('.app-box').classList.add('selected');
+        }
+
+        const waterEffect = document.getElementById('water-effect');
+
+        function createBubble() {
+            const bubble = document.createElement('div');
+            bubble.classList.add('bubble');
+            const size = Math.random() * 20 + 10;
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+            bubble.style.left = `${Math.random() * 95}%`;
+            bubble.style.animationDuration = `${Math.random() * 5 + 3}s`;
+            bubble.style.animationDelay = `${Math.random() * 3}s`;
+            waterEffect.appendChild(bubble);
+            bubble.addEventListener('animationend', () => {
+                bubble.remove();
+            });
+        }
+
+        setInterval(createBubble, 500);
+    </script>
+
+</body>
+</html>

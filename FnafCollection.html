@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FNAF Collection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --crt-glow-color: #00ff66;
+            --screen-color: #0d120f;
+            --text-color: #00c25a;
+        }
+        body {
+            font-family: 'VT323', monospace;
+            background-color: #0a0a0a;
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            padding: 1rem;
+        }
+
+        /* CRT Screen Filter and Scanlines */
+        .crt-screen {
+            position: relative;
+            background-color: var(--screen-color);
+            border-radius: 0.5rem;
+            box-shadow: 0 0 10px 5px var(--text-color), 
+                        inset 0 0 10px 5px rgba(0, 0, 0, 0.5);
+            animation: flicker 0.1s infinite alternate;
+        }
+
+        .crt-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0.8) 50%, rgba(0, 0, 0, 0.2) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.98; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 5px var(--text-color); }
+            to { box-shadow: 0 0 20px var(--text-color); }
+        }
+
+        .cam-button {
+            transition: all 0.2s;
+            box-shadow: 0 0 5px var(--text-color);
+        }
+
+        .cam-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--text-color);
+        }
+
+        .cam-button.active {
+            box-shadow: 0 0 20px 5px var(--text-color);
+            background-color: var(--text-color);
+            color: var(--screen-color);
+            animation: glow 1.5s infinite alternate;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 flex justify-center items-center min-h-screen">
+    <div class="crt-screen w-full max-w-6xl p-4 md:p-8 flex flex-col md:flex-row gap-8">
+        <!-- Camera Display Screen -->
+        <div id="camera-display" class="flex-1 w-full h-auto min-h-[400px] flex items-center justify-center p-4 border border-dashed border-gray-600 rounded-md">
+            <!-- Camera content will be injected here by JavaScript -->
+        </div>
+
+        <!-- Camera Selection Panel -->
+        <div class="w-full md:w-64 flex flex-col items-center justify-center space-y-4">
+            <h2 class="text-2xl mb-4 text-center">CAM MENU</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 gap-4 w-full">
+                <button class="cam-button active bg-gray-800 text-green-300 border border-green-500 rounded-md p-2 text-center text-lg shadow-md hover:bg-green-500 hover:text-black" data-cam-id="cam01">Fnaf 1</button>
+                <button class="cam-button bg-gray-800 text-green-300 border border-green-500 rounded-md p-2 text-center text-lg shadow-md hover:bg-green-500 hover:text-black" data-cam-id="cam02">Fnaf 2</button>
+                <button class="cam-button bg-gray-800 text-green-300 border border-green-500 rounded-md p-2 text-center text-lg shadow-md hover:bg-green-500 hover:text-black" data-cam-id="cam03">Fnaf 3</button>
+                <button class="cam-button bg-gray-800 text-green-300 border border-green-500 rounded-md p-2 text-center text-lg shadow-md hover:bg-green-500 hover:text-black" data-cam-id="cam04">Fnaf 4</button>
+                <button class="cam-button bg-gray-800 text-green-300 border border-green-500 rounded-md p-2 text-center text-lg shadow-md hover:bg-green-500 hover:text-black" data-cam-id="cam05">Fnaf SL</button>
+                <button class="cam-button bg-gray-800 text-green-300 border border-green-500 rounded-md p-2 text-center text-lg shadow-md hover:bg-green-500 hover:text-black" data-cam-id="cam06">Fnaf PS</button>
+            </div>
+            <div class="mt-4 text-center text-sm opacity-50">
+                <p>Status: ONLINE</p>
+                <p>Battery: 99%</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cameraButtons = document.querySelectorAll('.cam-button');
+        const cameraDisplay = document.getElementById('camera-display');
+
+        // Function to handle redirection
+        const redirectToLink = (url) => {
+            window.location.href = url;
+        };
+
+        const cameras = {
+            'cam01': {
+                name: 'CAM 01: Main Hall',
+                url: 'https://placehold.co/600x400/1a1a1a/00c25a?text=CAM+01+--+fnaf+1',
+                content: `<div class="text-center">
+                            <img src="https://placehold.co/600x400/1a1a1a/00c25a?text=CAM+01+--+MAIN+HALL" alt="Main Hall" class="w-full h-auto rounded-md mb-2 border border-green-600">
+                            <p class="text-xl">STATIC</p>
+                            <button class="cam-button mt-4 bg-gray-800 text-green-300 border border-green-500 rounded-md p-2 text-center text-lg shadow-md hover:bg-green-500 hover:text-black" onclick="redirectToLink('https://qottlebup.nekoweb.org/clFNAF.html')">PLAY</button>
+                          </div>`
+            },
+            'cam02': {
+                name: 'CAM 02: Dining Area',
+                url: 'https://placehold.co/600x400/1a1a1a/00c25a?text=CAM+02+--+fnaf+2',
+                content: `<div class="text-center">
+                            <img src="https://placehold.co/600x400/1a1a1a/00c25a?text=CAM+02+--+DINING+AREA" alt="Dining Area" class="w-full h-auto rounded-md mb-2 border border-green-600">
+                            <p class="text-xl">No Movement Detected</p>
+                            <button class="cam-button mt-4 bg-gray-800 text-green-300 border border-green-500 rounded-md p-2 text-center text-lg shadow-md hover:bg-green-500 hover:text-black" onclick="redirectToLink('https://qottlebup.nekoweb.org/clFNAF2.html')">PLAY</button>
+                          </div>`
+            },
+            'cam03': {
+                name: 'CAM 03: Pirate Cove',
+                url: 'https://placehold.co/600x400/1a1a1a/00c25a?text=CAM+03+--+fnaf+3',
+                content: `<div class="text-center">
+                            <img src="https://placehold.co/600x400/1a1a1a/00c25a?text=CAM+03+--+PIRATE+COVE" alt="Pirate Cove" class="w-full h-auto rounded-md mb-2 border border-green-600">
+                            <p class="text-xl">Out of Order</p>
+                            <button class="cam-button mt-4 bg-gray-800 text-green-300 border border-green-500 rounded-md p-2 text-center text-lg shadow-md hover:bg-green-500 hover:text-black" onclick="redirectToLink('https://qottlebup.nekoweb.org/clFNAF3.html')">PLAY</button>
+                          </div>`
+            },
+            'cam04': {
+                name: 'CAM 04: West Hall',
+                url: 'https://placehold.co/600x400/1a1a1a/00c25a?text=CAM+04+--+fnaf+4',
+                content: `<div class="text-center">
+                            <img src="https://placehold.co/600x400/1a1a1a/00c25a?text=CAM+04+--+WEST+HALL" alt="West Hall" class="w-full h-auto rounded-md mb-2 border border-green-600">
+                            <p class="text-xl">Low Light</p>
+                            <button class="cam-button mt-4 bg-gray-800 text-green-300 border border-green-500 rounded-md p-2 text-center text-lg shadow-md hover:bg-green-500 hover:text-black" onclick="redirectToLink('https://qottlebup.nekoweb.org/clFNAF4.html')">PLAY</button>
+                          </div>`
+            },
+            'cam05': {
+                name: 'CAM 05: East Hall',
+                url: 'https://placehold.co/600x400/1a1a1a/00c25a?text=CAM+05+--+fnaf+SL',
+                content: `<div class="text-center">
+                            <img src="https://placehold.co/600x400/1a1a1a/00c25a?text=CAM+05+--+EAST+HALL" alt="East Hall" class="w-full h-auto rounded-md mb-2 border border-green-600">
+                            <p class="text-xl">Motion Detected!</p>
+                            <button class="cam-button mt-4 bg-gray-800 text-green-300 border border-green-500 rounded-md p-2 text-center text-lg shadow-md hover:bg-green-500 hover:text-black" onclick="redirectToLink('https://qottlebup.nekoweb.org/clfnafsl.html')">PLAY</button>
+                          </div>`
+            },
+            'cam06': {
+                name: 'CAM 06: Kitchen',
+                url: 'https://placehold.co/600x400/1a1a1a/00c25a?text=CAM+06+--+fnaf+PS",',
+                content: `<div class="text-center">
+                            <img src="https://placehold.co/600x400/1a1a1a/00c25a?text=CAM+06+--+KITCHEN" alt="Kitchen" class="w-full h-auto rounded-md mb-2 border border-green-600">
+                            <p class="text-xl">Audio Only</p>
+                            <button class="cam-button mt-4 bg-gray-800 text-green-300 border border-green-500 rounded-md p-2 text-center text-lg shadow-md hover:bg-green-500 hover:text-black" onclick="redirectToLink('https://qottlebup.nekoweb.org/clfnafps.html')">PLAY</button>
+                          </div>`
+            }
+        };
+
+        const changeCamera = (camId) => {
+            const cam = cameras[camId];
+            if (cam) {
+                // Update display content
+                cameraDisplay.innerHTML = `
+                    <div class="flex flex-col items-center w-full">
+                        <h3 class="text-xl mb-4">${cam.name}</h3>
+                        ${cam.content}
+                    </div>
+                `;
+
+                // Update active button state
+                cameraButtons.forEach(button => {
+                    button.classList.remove('active');
+                });
+                document.querySelector(`[data-cam-id="${camId}"]`).classList.add('active');
+            }
+        };
+
+        // Add event listeners to all camera buttons
+        cameraButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const camId = event.target.dataset.camId;
+                changeCamera(camId);
+            });
+        });
+
+        // Initial load
+        window.onload = () => {
+          changeCamera('cam01');
+        }
+
+    </script>
+</body>
+</html>

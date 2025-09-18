@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Frutiger Aero Glass Music Player</title>
+
+<!-- Frutiger is proprietary; use Inter as a clean geometric substitute -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg1: #eef8fb;               /* soft sky */
+    --bg2: #e6f3f8;
+    --glass-plate: rgba(255,255,255,0.72);
+    --glass-edge: rgba(255,255,255,0.85);
+    --accent: #3aa0ff;            /* aero blue */
+    --accent-2: #7be0c7;          /* mint */
+    --muted: rgba(6,23,33,0.48);
+    --shadow: 0 18px 40px rgba(12,20,30,0.08);
+    --radius: 14px;
+  }
+
+  html,body{height:100%; margin:0; font-family:"Frutiger", "Inter", "Segoe UI", system-ui, -apple-system, sans-serif; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; background: linear-gradient(180deg,var(--bg1),var(--bg2)); color:#062a3a;}
+
+/* layout */
+.wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:36px; gap:28px; }
+
+/* stage container - subtle frosted backdrop */
+.stage {
+  width:980px;
+  max-width:calc(100% - 48px);
+  display:grid;
+  grid-template-columns: 420px 1fr;
+  gap:28px;
+  align-items:start;
+  transform: translateY(0);
+}
+
+/* shared glass card */
+.card {
+  border-radius: calc(var(--radius) + 6px);
+  padding:18px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(247,250,252,0.72));
+  border: 1px solid rgba(255,255,255,0.85);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+}
+
+/* player left column (Frutiger Aero + glass) */
+.player {
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  width:100%;
+}
+
+/* header area with album and summary */
+.header {
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+
+/* album art: soft rounded rectangle - Frutiger-like */
+.album {
+  width:104px;
+  height:104px;
+  border-radius:16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(245,250,253,0.9));
+  border:1px solid rgba(6,23,33,0.04);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow: 0 10px 30px rgba(6,23,33,0.04), inset 0 1px 0 rgba(255,255,255,0.85);
+  overflow:hidden;
+}
+.album .label {
+  width:76%;
+  height:76%;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  color:var(--muted);
+  font-weight:800;
+  font-size:12px;
+  background: linear-gradient(135deg, rgba(58,160,255,0.12), rgba(123,224,199,0.06));
+  box-shadow: inset 0 -8px 18px rgba(6,23,33,0.03);
+  padding:6px;
+}
+
+/* track text */
+.track-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+.title { font-size:1.06rem; font-weight:800; color:#062a3a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.artist { color:var(--muted); font-weight:700; font-size:0.88rem; }
+
+/* big play + controls */
+.controls-top { display:flex; align-items:center; gap:10px; margin-top:6px; }
+.icon-btn { width:46px; height:46px; display:grid; place-items:center; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(245,250,253,0.95)); border:1px solid rgba(6,23,33,0.04); cursor:pointer; box-shadow: 0 6px 18px rgba(6,23,33,0.04); }
+.big-play {
+  width:72px; height:72px; border-radius:18px; display:grid; place-items:center;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color:#04202a; font-weight:900; font-size:20px; border:none;
+  box-shadow: 0 12px 36px rgba(58,160,255,0.08), inset 0 -8px 18px rgba(255,255,255,0.7);
+  cursor:pointer;
+  transition: transform .16s cubic-bezier(.2,.9,.2,1);
+}
+.big-play.playing{ transform: scale(1.03); }
+
+/* visualizer */
+.visualizer {
+  height:86px;
+  border-radius:12px;
+  overflow:hidden;
+  background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(245,250,253,0.9));
+  border:1px solid rgba(6,23,33,0.03);
+  box-shadow: inset 0 6px 24px rgba(6,23,33,0.04);
+}
+.visualizer canvas{ width:100%; height:100%; display:block; }
+
+/* progress area */
+.progress-wrap{ display:flex; flex-direction:column; gap:8px; }
+.progress-row{ display:flex; align-items:center; gap:12px; }
+.time{ width:52px; text-align:center; color:var(--muted); font-weight:800; font-size:0.86rem; }
+.progress { position:relative; flex:1; height:12px; border-radius:999px; background: linear-gradient(90deg, rgba(6,23,33,0.03), rgba(6,23,33,0.02)); border:1px solid rgba(6,23,33,0.02); cursor:pointer; overflow:visible; }
+.fill { height:100%; width:0%; border-radius:999px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); box-shadow: 0 8px 24px rgba(58,160,255,0.06); transition: width .06s linear; }
+.knob { position:absolute; top:50%; transform: translate(-50%,-50%); width:14px; height:14px; border-radius:50%; background:white; box-shadow: 0 8px 18px rgba(6,23,33,0.08); left:0%; }
+.tooltip { position:absolute; top:-38px; transform: translateX(-50%); background: rgba(6,23,33,0.9); color:#fff; padding:6px 8px; border-radius:8px; font-size:12px; opacity:0; pointer-events:none; transition:opacity .12s, transform .12s; }
+.tooltip.show { opacity:1; transform: translateX(-50%) translateY(-6px); }
+
+/* lower controls */
+.controls-bottom { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+.left { display:flex; align-items:center; gap:10px; }
+.right { display:flex; align-items:center; gap:10px; }
+.small-btn { padding:8px 12px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(245,250,253,0.95)); border:1px solid rgba(6,23,33,0.04); cursor:pointer; font-weight:800; color:#062a3a; box-shadow: 0 8px 18px rgba(6,23,33,0.04); }
+
+/* right panel with glass aesthetic */
+.panel {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-height:420px;
+}
+.panel .title { font-weight:900; color:#062a3a; }
+.panel .sub { color:var(--muted); font-weight:800; }
+
+.panel .wavebox {
+  height:136px;
+  border-radius:12px;
+  overflow:hidden;
+  border:1px solid rgba(6,23,33,0.03);
+  background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(245,250,253,0.9));
+  box-shadow: inset 0 8px 24px rgba(6,23,33,0.02);
+}
+.panel canvas{ width:100%; height:100%; display:block; }
+
+.playlist {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  max-height:260px;
+  overflow:auto;
+  padding-right:6px;
+}
+.playlist .item { display:flex; justify-content:space-between; gap:12px; padding:10px; border-radius:10px; cursor:pointer; background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(245,250,253,0.92)); border:1px solid rgba(6,23,33,0.02); transition: transform .12s, background .12s; font-weight:800; color:#062a3a; }
+.playlist .item:hover { transform: translateY(-3px); background: linear-gradient(90deg, rgba(58,160,255,0.12), rgba(123,224,199,0.06)); }
+.playlist .item.active { background: linear-gradient(90deg, rgba(58,160,255,0.18), rgba(123,224,199,0.08)); color:#02161a; }
+
+/* meta */
+.meta { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:0.86rem; font-weight:700; }
+
+/* focus */
+.icon-btn:focus, .big-play:focus, .small-btn:focus, .knob:focus, .playlist .item:focus { outline: 3px solid rgba(58,160,255,0.12); outline-offset:4px; }
+
+/* responsive */
+@media (max-width:980px){
+  .stage{ grid-template-columns: 1fr; width:100%; }
+  .panel{ order:2; }
+  .wrap{ padding:18px; }
+}
+</style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-label="Frutiger Aero Glass Music Player">
+    <div class="stage">
+      <section class="card player" aria-label="Player">
+        <div class="header">
+          <div class="album" aria-hidden="true">
+            <div class="label" id="disc-label">NO ART</div>
+          </div>
+
+          <div class="track-info" aria-live="polite">
+            <div class="title" id="track-title">Track Title</div>
+            <div class="artist" id="track-artist">Artist Name</div>
+
+            <div class="controls-top">
+              <button class="icon-btn" id="prev" aria-label="Previous track" title="Previous">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 18V6l8.5 6L6 18zM20 18V6h-2v12h2z" fill="currentColor"/></svg>
+              </button>
+
+              <button class="big-play" id="play-pause" aria-label="Play">▶</button>
+
+              <button class="icon-btn" id="next" aria-label="Next track" title="Next">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 6v12l-8.5-6L16 6zM4 6v12h2V6H4z" fill="currentColor"/></svg>
+              </button>
+
+              <button class="small-btn" id="playlist-toggle" aria-expanded="false" title="Toggle playlist">Playlist ▾</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="visualizer" aria-hidden="true">
+          <canvas id="viz"></canvas>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-row">
+            <div class="time" id="current-time">0:00</div>
+
+            <div class="progress" id="progress" role="slider" aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+              <div class="fill" id="fill"></div>
+              <div class="knob" id="knob" tabindex="0" aria-hidden="true"></div>
+              <div class="tooltip" id="tooltip">0:00</div>
+            </div>
+
+            <div class="time" id="duration">0:00</div>
+          </div>
+        </div>
+
+        <div class="controls-bottom">
+          <div class="left">
+            <button class="small-btn" id="shuffle" title="Shuffle" aria-pressed="false">🔀</button>
+            <button class="small-btn" id="repeat" title="Repeat">🔁</button>
+
+            <div style="width:8px"></div>
+
+            <button class="small-btn" id="mute" title="Mute">🔊</button>
+            <input id="volume" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="Volume" style="width:120px;">
+          </div>
+
+          <div class="right">
+            <button class="small-btn" id="download" title="Download current track">Save</button>
+          </div>
+        </div>
+
+        <div class="meta">
+          <div id="track-index">1 / 4</div>
+          <div>Frutiger Aero • Glass</div>
+        </div>
+
+        <audio id="audio" preload="metadata"></audio>
+      </section>
+
+      <aside class="card panel" aria-label="Playlist and details">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div class="title">Now Playing</div>
+            <div class="sub" id="panel-sub">Frutiger Aero • Glass</div>
+          </div>
+          <div id="panel-count" style="font-weight:800; color:var(--muted);">4 tracks</div>
+        </div>
+
+        <div class="wavebox" aria-hidden="true">
+          <canvas id="panel-wave"></canvas>
+        </div>
+
+        <div class="playlist" id="playlist" aria-hidden="true"></div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="small-btn" id="like">Like</button>
+          <button class="small-btn" id="share">Share</button>
+          <button class="small-btn" id="open">Open</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+<script>
+/* Frutiger Aero Glass Music Player JS
+   - Single-file, accessible, responsive
+   - Web Audio visualizer + panel waveform
+   - Progress seek (mouse/touch/keyboard)
+   - Playlist, shuffle, repeat, download
+*/
+
+/* Tracks */
+const tracks = [
+  { title: "t e l e p a t h テレパシー能力者 - 楽園", artist: "Telepath", src: "https://qottlebup.nekoweb.org/t%20e%20l%20e%20p%20a%20t%20h%20%C3%A3%C2%83%C2%86%C3%A3%C2%83%C2%AC%C3%A3%C2%83%C2%91%C3%A3%C2%82%C2%B7%C3%A3%C2%83%C2%BC%C3%A8%C2%83%C2%BD%C3%A5%C2%8A%C2%9B%C3%A8%C2%80%C2%85%20-%20%C3%A6%C2%A5%C2%BD%C3%A5%C2%9C%C2%92.mp3" },
+  { title: "t e l e p a t h テレパシー能力者 - ピアス視線", artist: "Telepath", src: "https://qottlebup.nekoweb.org/t%20e%20l%20e%20p%20a%20t%20h%20%C3%A3%C2%83%C2%86%C3%A3%C2%83%C2%AC%C3%A3%C2%83%C2%91%C3%A3%C2%82%C2%B7%C3%A3%C2%83%C2%BC%C3%A8%C2%83%C2%BD%C3%A5%C2%8A%C2%9B%C3%A8%C2%80%C2%85%20-%20%C3%A3%C2%83%C2%94%C3%A3%C2%82%C2%A2%C3%A3%C2%82%C2%B9%C3%A8%C2%A6%C2%96%C3%A7%C2%B7%C2%9A.mp3" },
+  { title: "Sonic mega collection extras menu", artist: "Sega, sonic team", src: "https://qottlebup.nekoweb.org/Extras%20Menu%20-%20Sonic%20Mega%20Collection%20[OST].mp3" },
+  { title: "Moudamepon's Theme (Patapon OST)", artist: "Kemmei Adachi", src: "https://qottlebup.nekoweb.org/09.%20Moudamepon%27s%20Theme%20-%20Disk%202%20-%20Patapon%20Complete%20Soundtrack.mp3" }
+];
+
+/* Elements */
+const audio = document.getElementById('audio');
+const playPauseBtn = document.getElementById('play-pause');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+const discLabel = document.getElementById('disc-label');
+const trackTitle = document.getElementById('track-title');
+const trackArtist = document.getElementById('track-artist');
+const vizCanvas = document.getElementById('viz');
+const vizCtx = vizCanvas.getContext('2d');
+const panelCanvas = document.getElementById('panel-wave');
+const panelCtx = panelCanvas.getContext('2d');
+const fillEl = document.getElementById('fill');
+const progressEl = document.getElementById('progress');
+const knob = document.getElementById('knob');
+const tooltip = document.getElementById('tooltip');
+const currentTimeEl = document.getElementById('current-time');
+const durationEl = document.getElementById('duration');
+const volumeSlider = document.getElementById('volume');
+const muteBtn = document.getElementById('mute');
+const playlistToggle = document.getElementById('playlist-toggle');
+const playlistContainer = document.getElementById('playlist');
+const trackIndexEl = document.getElementById('track-index');
+const shuffleBtn = document.getElementById('shuffle');
+const repeatBtn = document.getElementById('repeat');
+const downloadBtn = document.getElementById('download');
+const panelCount = document.getElementById('panel-count');
+
+let index = 0;
+let isPlaying = false;
+let audioCtx = null;
+let analyser = null;
+let dataArray = null;
+let timeArray = null;
+let source = null;
+let rafViz = null;
+let rafPanel = null;
+let rafProgress = null;
+let seeking = false;
+let shuffle = false;
+let repeatMode = 0; // 0 off, 1 all, 2 one
+let shuffled = [];
+
+/* Utility: high-DPI canvas setup */
+function fixDPR(canvas, ctx){
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+  canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize', () => { if (vizCanvas) fixDPR(vizCanvas,vizCtx); if(panelCanvas) fixDPR(panelCanvas,panelCtx); });
+
+/* Playlist UI */
+function buildPlaylist(){
+  playlistContainer.innerHTML = '';
+  tracks.forEach((t,i) => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.tabIndex = 0;
+    div.dataset.index = i;
+    div.innerHTML = `<div style="min-width:0; overflow:hidden;">
+                       <div style="font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.title}</div>
+                       <div style="font-size:0.85rem; color:var(--muted); font-weight:800;">${t.artist}</div>
+                     </div>
+                     <div style="opacity:0.9; font-weight:800;">${i+1}</div>`;
+    div.addEventListener('click', ()=> { index = i; load(index); play(); togglePlaylist(false); });
+    div.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); div.click(); } });
+    playlistContainer.appendChild(div);
+  });
+  panelCount.textContent = `${tracks.length} tracks`;
+  updatePlaylistActive();
+}
+function updatePlaylistActive(){
+  [...playlistContainer.children].forEach(c => c.classList.toggle('active', Number(c.dataset.index) === index));
+}
+
+/* Load track */
+function load(i){
+  const t = tracks[i];
+  audio.src = t.src;
+  trackTitle.textContent = t.title;
+  trackArtist.textContent = t.artist;
+  discLabel.textContent = (t.artist || 'Artist').split(' ')[0] || 'NO ART';
+  trackIndexEl.textContent = `${i+1} / ${tracks.length}`;
+  resetProgress();
+  updatePlaylistActive();
+
+  downloadBtn.onclick = () => {
+    const a = document.createElement('a');
+    a.href = audio.src;
+    a.download = sanitize(`${t.title}.mp3`);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+}
+function sanitize(s){ return s.replace(/[<>:"\/\\|?*\x00-\x1F]/g,'_').slice(0,120); }
+
+/* AudioContext setup (lazily) */
+function ensureAudio(){
+  if(audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  source = audioCtx.createMediaElementSource(audio);
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 1024;
+  analyser.smoothingTimeConstant = 0.86;
+  source.connect(analyser);
+  analyser.connect(audioCtx.destination);
+  dataArray = new Uint8Array(analyser.frequencyBinCount);
+  timeArray = new Uint8Array(analyser.fftSize);
+  startVisualizer();
+}
+
+/* Play / Pause */
+function play(){
+  if(!audioCtx) ensureAudio();
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  audio.play().then(()=> {
+    isPlaying = true;
+    playPauseBtn.textContent = '❚❚';
+    playPauseBtn.classList.add('playing');
+    startProgressLoop();
+  }).catch(e => console.warn('play failed', e));
+}
+function pause(){
+  audio.pause();
+  isPlaying = false;
+  playPauseBtn.textContent = '▶';
+  playPauseBtn.classList.remove('playing');
+  cancelAnimationFrame(rafProgress);
+}
+playPauseBtn.addEventListener('click', ()=> { if(!audioCtx) ensureAudio(); isPlaying ? pause() : play(); });
+playPauseBtn.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); playPauseBtn.click(); } });
+
+/* Next / Prev with shuffle & repeat */
+function buildShuffled(){
+  shuffled = tracks.map((_,i)=>i).filter(i=>i!==index);
+  for(let i=shuffled.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [shuffled[i],shuffled[j]] = [shuffled[j],shuffled[i]]; }
+}
+function next(){
+  if(repeatMode === 2){ audio.currentTime = 0; play(); return; }
+  if(shuffle){ if(!shuffled.length) buildShuffled(); index = shuffled.shift(); }
+  else index = (index + 1) % tracks.length;
+  load(index); play();
+}
+function prev(){
+  if(audio.currentTime > 4){ audio.currentTime = 0; return; }
+  if(shuffle) index = Math.floor(Math.random()*tracks.length);
+  else index = (index - 1 + tracks.length) % tracks.length;
+  load(index); play();
+}
+prevBtn.addEventListener('click', prev);
+nextBtn.addEventListener('click', next);
+
+/* Progress UI */
+function formatTime(s){ if(!s || !isFinite(s)) return '0:00'; const m = Math.floor(s/60), sec = Math.floor(s%60); return `${m}:${sec<10?'0':''}${sec}`; }
+function resetProgress(){ fillEl.style.width='0%'; knob.style.left='0%'; currentTimeEl.textContent='0:00'; durationEl.textContent='0:00'; progressEl.setAttribute('aria-valuenow','0'); }
+function updateProgress(){ if(!audio.duration || isNaN(audio.duration)) return; const pct = (audio.currentTime / audio.duration) * 100; fillEl.style.width = pct + '%'; knob.style.left = pct + '%'; currentTimeEl.textContent = formatTime(audio.currentTime); progressEl.setAttribute('aria-valuenow', Math.round(pct)); }
+function startProgressLoop(){ cancelAnimationFrame(rafProgress); (function loop(){ updateProgress(); rafProgress = requestAnimationFrame(loop); })(); }
+audio.addEventListener('loadedmetadata', ()=> { durationEl.textContent = formatTime(audio.duration); });
+audio.addEventListener('timeupdate', updateProgress);
+audio.addEventListener('ended', ()=> { if(repeatMode === 2){ audio.currentTime = 0; play(); } else { next(); } });
+
+/* Seek interactions */
+function seekToClientX(clientX){
+  const r = progressEl.getBoundingClientRect();
+  const x = Math.min(Math.max(clientX - r.left, 0), r.width);
+  const pct = x / r.width;
+  if(audio.duration) audio.currentTime = pct * audio.duration;
+  updateProgress();
+  tooltip.textContent = formatTime(pct * (audio.duration || 0));
+  tooltip.style.left = (pct*100) + '%';
+  tooltip.classList.add('show');
+}
+progressEl.addEventListener('mousedown', e =>{ seeking=true; seekToClientX(e.clientX); document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp); });
+function onMove(e){ if(seeking) seekToClientX(e.clientX); }
+function onUp(e){ if(seeking) seekToClientX(e.clientX); seeking=false; tooltip.classList.remove('show'); document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
+progressEl.addEventListener('touchstart', e => { const t = e.touches[0]; seeking=true; seekToClientX(t.clientX); }, {passive:true});
+progressEl.addEventListener('touchmove', e => { const t = e.touches[0]; if(seeking) seekToClientX(t.clientX); }, {passive:true});
+progressEl.addEventListener('touchend', ()=> { seeking=false; tooltip.classList.remove('show'); });
+progressEl.addEventListener('mousemove', e => { const r = progressEl.getBoundingClientRect(); const pct = Math.min(Math.max((e.clientX - r.left)/r.width,0),1); tooltip.textContent = formatTime(pct * (audio.duration || 0)); tooltip.style.left = (pct*100) + '%'; tooltip.classList.add('show'); });
+progressEl.addEventListener('mouseleave', ()=> tooltip.classList.remove('show'));
+
+/* Volume & mute */
+volumeSlider.addEventListener('input', ()=> { audio.volume = Number(volumeSlider.value); muteBtn.textContent = audio.volume === 0 ? '🔇' : '🔊'; });
+muteBtn.addEventListener('click', ()=> { if(audio.volume === 0){ audio.volume = Number(volumeSlider.value) || 0.8; muteBtn.textContent='🔊'; } else { audio.volume = 0; muteBtn.textContent='🔇'; } volumeSlider.value = audio.volume; });
+
+/* Shuffle & Repeat */
+shuffleBtn.addEventListener('click', ()=> { shuffle = !shuffle; shuffleBtn.style.background = shuffle ? 'linear-gradient(90deg, rgba(58,160,255,0.12), rgba(123,224,199,0.06))' : ''; shuffleBtn.setAttribute('aria-pressed', String(shuffle)); if(shuffle) buildShuffled(); });
+repeatBtn.addEventListener('click', ()=> { repeatMode = (repeatMode + 1) % 3; repeatBtn.style.background = repeatMode === 0 ? '' : 'linear-gradient(90deg, rgba(58,160,255,0.12), rgba(123,224,199,0.06))'; repeatBtn.title = repeatMode === 0 ? 'Repeat off' : repeatMode === 1 ? 'Repeat all' : 'Repeat one'; });
+
+/* Playlist toggle */
+playlistToggle.addEventListener('click', ()=> togglePlaylist());
+function togglePlaylist(force){ const open = typeof force === 'boolean' ? force : playlistContainer.style.display !== 'block'; playlistContainer.style.display = open ? 'block' : 'none'; playlistToggle.setAttribute('aria-expanded', String(open)); }
+
+/* Keyboard shortcuts */
+window.addEventListener('keydown', e => {
+  if(e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
+  if(e.key === ' '){ e.preventDefault(); playPauseBtn.click(); }
+  else if(e.key === 'ArrowLeft'){ e.preventDefault(); audio.currentTime = Math.max(audio.currentTime - 5, 0); }
+  else if(e.key === 'ArrowRight'){ e.preventDefault(); audio.currentTime = Math.min(audio.currentTime + 5, audio.duration || 0); }
+  else if(e.key.toLowerCase() === 'n'){ next(); }
+  else if(e.key.toLowerCase() === 'p'){ prev(); }
+});
+
+/* Visualizer (bars + waveform) */
+function startVisualizer(){
+  if(!analyser) return;
+  fixDPR(vizCanvas, vizCtx);
+  fixDPR(panelCanvas, panelCtx);
+
+  const draw = () => {
+    rafViz = requestAnimationFrame(draw);
+    analyser.getByteFrequencyData(dataArray);
+    analyser.getByteTimeDomainData(timeArray);
+
+    const w = vizCanvas.clientWidth, h = vizCanvas.clientHeight;
+    vizCtx.clearRect(0,0,vizCanvas.width,vizCanvas.height);
+
+    // soft background
+    const g = vizCtx.createLinearGradient(0,0,w,0);
+    g.addColorStop(0, 'rgba(58,160,255,0.06)');
+    g.addColorStop(1, 'rgba(123,224,199,0.02)');
+    vizCtx.fillStyle = g;
+    vizCtx.fillRect(0,0,w,h*0.28);
+
+    // bars
+    const barCount = Math.min(64, Math.floor(w / 10));
+    const step = Math.floor(dataArray.length / barCount);
+    const barW = w / barCount;
+    for(let i=0;i<barCount;i++){
+      const v = dataArray[i*step] / 255;
+      const bh = Math.max(3, v * h * 0.7);
+      const x = i*barW + 4;
+      const y = h - bh - 8;
+      const grad = vizCtx.createLinearGradient(x, y, x, y+bh);
+      grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+      grad.addColorStop(0.25, `rgba(58,160,255,${0.9 - i*0.008})`);
+      grad.addColorStop(1, `rgba(123,224,199,${0.6 - i*0.004})`);
+      vizCtx.fillStyle = grad;
+
+      // rounded top shape
+      vizCtx.beginPath();
+      vizCtx.moveTo(x, y+bh);
+      vizCtx.lineTo(x, y+6);
+      vizCtx.quadraticCurveTo(x + barW/2, y, x + barW - 6, y+6);
+      vizCtx.lineTo(x + barW - 6, y+bh);
+      vizCtx.closePath();
+      vizCtx.fill();
+
+      // glow
+      vizCtx.fillStyle = `rgba(123,224,199,${v*0.03})`;
+      vizCtx.fillRect(x, y - 6, barW - 8, 6);
+    }
+
+    // waveform overlay
+    vizCtx.lineWidth = 2;
+    vizCtx.strokeStyle = 'rgba(6,23,33,0.06)';
+    vizCtx.beginPath();
+    const slice = timeArray.length / w;
+    for(let i=0;i<w;i++){
+      const t = timeArray[Math.floor(i*slice)];
+      const norm = (t - 128) / 128;
+      const y = h*0.36 + norm * 12;
+      if(i===0) vizCtx.moveTo(i,y); else vizCtx.lineTo(i,y);
+    }
+    vizCtx.stroke();
+
+    // panel waveform draw separately
+    drawPanelWave();
+  };
+
+  function drawPanelWave(){
+    rafPanel = requestAnimationFrame(drawPanelWave);
+    analyser.getByteTimeDomainData(timeArray);
+    fixDPR(panelCanvas, panelCtx);
+    const w = panelCanvas.clientWidth, h = panelCanvas.clientHeight;
+    panelCtx.clearRect(0,0, panelCanvas.width, panelCanvas.height);
+
+    // background
+    const g2 = panelCtx.createLinearGradient(0,0,0,h);
+    g2.addColorStop(0, 'rgba(255,255,255,0.94)');
+    g2.addColorStop(1, 'rgba(245,250,253,0.94)');
+    panelCtx.fillStyle = g2;
+    panelCtx.fillRect(0,0,w,h);
+
+    // waveform
+    panelCtx.lineWidth = 2.2;
+    panelCtx.strokeStyle = 'rgba(6,23,33,0.10)';
+    panelCtx.beginPath();
+    const slice = timeArray.length / w;
+    for(let i=0;i<w;i++){
+      const t = timeArray[Math.floor(i*slice)];
+      const norm = (t - 128) / 128;
+      const y = h*0.5 + norm * (h*0.22);
+      if(i===0) panelCtx.moveTo(i,y); else panelCtx.lineTo(i,y);
+    }
+    panelCtx.stroke();
+
+    // fill under waveform
+    panelCtx.beginPath();
+    for(let i=0;i<w;i++){
+      const t = timeArray[Math.floor(i*slice)];
+      const norm = (t - 128) / 128;
+      const y = h*0.5 + norm * (h*0.22);
+      if(i===0) panelCtx.moveTo(i,y); else panelCtx.lineTo(i,y);
+    }
+    panelCtx.lineTo(w, h);
+    panelCtx.lineTo(0, h);
+    panelCtx.closePath();
+    const fg = panelCtx.createLinearGradient(0,0,0,h);
+    fg.addColorStop(0, 'rgba(58,160,255,0.08)');
+    fg.addColorStop(1, 'rgba(123,224,199,0.02)');
+    panelCtx.fillStyle = fg;
+    panelCtx.fill();
+  }
+
+  draw();
+}
+
+/* Initialization */
+function init(){
+  buildPlaylist();
+  load(index);
+  audio.volume = Number(volumeSlider.value);
+  fixDPR(vizCanvas, vizCtx);
+  fixDPR(panelCanvas, panelCtx);
+  togglePlaylist(false);
+}
+init();
+
+/* Accessibility / keyboard for prev/next */
+[prevBtn, nextBtn].forEach(btn => btn.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); } }));
+
+/* Prevent creating AudioContext until user interacts */ 
+document.addEventListener('click', function once(){ /* intentionally empty to allow lazy creation on play */ document.removeEventListener('click', once); });
+
+/* Cleanup */
+window.addEventListener('beforeunload', () => {
+  if(rafViz) cancelAnimationFrame(rafViz);
+  if(rafPanel) cancelAnimationFrame(rafPanel);
+  if(rafProgress) cancelAnimationFrame(rafProgress);
+  if(audioCtx && audioCtx.state !== 'closed') audioCtx.close();
+});
+</script>
+</body>
+</html>

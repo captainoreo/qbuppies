@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QottleBup</title>
+    <link rel="icon" href="https://qottlebup.nekoweb.org/New_Nintendo_3DS.ico" type="image/png" />
+    <link rel="stylesheet" href="https://qottlebup.nekoweb.org/banner.css" />
+<script src="https://qottlebup.nekoweb.org/bannerInfo.js"></script>
+    <style>
+      body {
+        margin: 0;
+        font-family: 'PopHappiness', 'Arial', sans-serif;
+        background-color: #e6e8e7;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><rect width="10" height="10" fill="%23e6e8e7"/><path d="M 5 0 L 5 10" stroke="%23d6d8d7" stroke-width="1"/></svg>');
+        color: black;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        align-items: center;
+        padding: 4rem 1rem;
+        box-sizing: border-box;
+        cursor: url('cursor.png'), auto;
+        overflow-x: hidden;
+        overflow-y: hidden; /* Added to lock vertical scrolling */
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
+      /* Dark mode styles */
+      body.dark-mode {
+        background-color: #121212;
+        background-image: none;
+        color: #e0e0e0;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
+      body.dark-mode .wii-bottom-bar {
+        background-color: #222;
+        border-top: 2px solid #444;
+        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.8);
+      }
+
+      body.dark-mode .wii-top-bar {
+        background: linear-gradient(
+          to bottom,
+          rgba(18, 18, 18, 0.95) 0%,
+          rgba(18, 18, 18, 0) 100%
+        );
+      }
+
+      body.dark-mode .wii-date-time {
+        color: #bbb;
+      }
+
+      body.dark-mode .wii-button {
+        background-color: #333;
+        border-color: #555;
+      }
+
+      body.dark-mode .wii-button:hover {
+        box-shadow: 0 0 8px rgba(0, 161, 223, 0.8);
+      }
+
+      body.dark-mode .game-button {
+        background-color: #222;
+        color: #ddd;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+      }
+
+      body.dark-mode .game-button:hover,
+      body.dark-mode .game-button:focus {
+        box-shadow: 0 0 15px rgba(0, 161, 223, 1);
+      }
+
+      body.dark-mode .page-dot {
+        background-color: #555;
+        border-color: #888;
+      }
+
+      body.dark-mode .page-dot.active {
+        background-color: #00a1df;
+        border-color: #007ba3;
+      }
+
+      @font-face {
+        font-family: 'PopHappiness';
+        src: url('https://qottlebup.nekoweb.org/PopHappiness.OTF') format('opentype');
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      .wii-top-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100px;
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.8) 0%,
+          rgba(255, 255, 255, 0) 100%
+        );
+        pointer-events: none;
+        z-index: 100;
+      }
+
+      .wii-bottom-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 80px;
+        background-color: #c9c5c2;
+        border-top: 2px solid #a4a2a0;
+        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        padding: 0 20px;
+        box-sizing: border-box;
+        z-index: 100;
+      }
+
+      .wii-bottom-bar-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: 900px;
+      }
+
+      .wii-button {
+        background-color: #d8d4d1;
+        border: 2px solid #a4a2a0;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition:
+          transform 0.1s ease,
+          box-shadow 0.1s ease;
+      }
+
+      .wii-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 8px rgba(0, 161, 223, 0.4);
+      }
+      
+      .wii-button.disabled {
+          pointer-events: none;
+          opacity: 0.5;
+      }
+
+      .wii-button img {
+        width: 70%;
+        height: auto;
+      }
+
+      .wii-date-time {
+        font-size: 1rem;
+        text-align: center;
+        color: #555;
+        user-select: none;
+      }
+
+      .wii-date-time .time {
+        font-size: 1.5rem;
+      }
+      
+      #game-pages-container {
+        position: fixed;
+        z-index: 10;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+        max-width: 900px;
+        padding-bottom: 120px;
+        box-sizing: border-box;
+        overflow: hidden; /* This hides the pages that are not in view */
+      }
+      
+      #game-pages-wrapper {
+        display: flex;
+        transition: transform 0.4s ease-in-out; /* The animation */
+        width: 100%;
+      }
+
+      .game-buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(5, 1fr);
+        gap: 20px;
+        width: 100%;
+        height: 500px;
+        justify-items: center;
+        padding: 20px;
+        box-sizing: border-box;
+        flex-shrink: 0; /* Ensures the pages don't shrink */
+      }
+      
+      /* The .hidden class is no longer needed because the animation handles visibility */
+
+      .game-button {
+        width: 160px;
+        height: 80px;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: black;
+        font-weight: bold;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        cursor: url('cursor.png'), auto;
+        transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+        
+        /* New CSS to prevent stretching */
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      
+      .game-button .speech-bubble {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        background-color: #fff;
+        color: #000;
+        padding: 8px 12px;
+        border-radius: 12px;
+        white-space: nowrap;
+        font-size: 1rem;
+        font-weight: bold;
+        text-shadow: none;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        z-index: 10;
+        pointer-events: none;
+        transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+        opacity: 0;
+      }
+      
+      .game-button:hover .speech-bubble {
+        transform: translateX(-50%) translateY(-20px);
+        opacity: 1;
+      }
+
+
+      .game-button:hover,
+      .game-button:focus {
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(0, 161, 223, 0.7);
+        outline: none;
+        cursor: url('Link-Select.png'), pointer;
+      }
+
+      .game-button:active {
+        transform: scale(1);
+        box-shadow: 0 0 8px rgba(0, 161, 223, 0.4);
+      }
+      
+      .game-button.selected {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(0, 161, 223, 0.9);
+      }
+
+      .game-button.large {
+        grid-column: span 2;
+        width: 340px;
+      }
+
+      .game-button.special {
+        color: white;
+      }
+
+      .game-button.blue {
+        background-color: #0087c0;
+      }
+
+      .game-button.green {
+        background-color: #4caf50;
+      }
+
+      /* Game button images */
+      .game-button.wii-shop { background-image: url('https://qottlebup.nekoweb.org/Page_image.png'); }
+      .game-button.photo-channel { background-image: url('https://qottlebup.nekoweb.org/emulation.gif'); }
+      .game-button.mii-channel { background-image: url('https://qottlebup.nekoweb.org/EmulatorJS.png'); }
+      .game-button.forecast-channel { background-image: url('https://qottlebup.nekoweb.org/pizza-tower-peppino.gif'); }
+      .game-button.news-channel { background-image: url('https://qottlebup.nekoweb.org/bo-noise-noise.gif'); }
+      .game-button.super-bo-noise { background-image: url('https://qottlebup.nekoweb.org/undertale-pixel-art.gif'); }
+      .game-button.cave-story { background-image: url('https://smmskm.vercel.app/'); }
+      .game-button.fnaf-all-stars { background-image: url('https://qottlebup.nekoweb.org/freddy-freddy-fazbear.gif'); }
+      .game-button.mario-kart-zx { background-image: url('https://qottlebup.nekoweb.org/giphy.gif'); }
+      .game-button.deltarune { background-image: url('https://tynker.me/code/view/68487af7d2652e53a2339947/'); }
+      .game-button.web-fishing { background-image: url('https://webfishies.vercel.app/'); }
+      .game-button.hotline-miami { background-image: url('https://qottlebup.nekoweb.org/DuckGIF-2.gif'); }
+      .game-button.slender { background-image: url('https://qottlebup.nekoweb.org/slenderman-slender-man.gif'); }
+      .game-button.club-penguin { background-image: url('https://play.cpjourney.net/'); }
+      .game-button.sonic4 { background-image: url('https://wamwoowam.co.uk/sonic4/'); }
+      .game-button.cookie-clicker { background-image: url('https://cookieclickerz.vercel.app/'); }
+      .game-button.super-mario-64 { background-image: url('https://mariosixty.vercel.app/sm64/index.html'); }
+      .game-button.my-teardrop { background-image: url('https://myveryownteardrop.xyz/'); }
+      .game-button.ikachan-game { background-image: url('https://qottlebup.nekoweb.org/IKACHAN-002.png'); }
+      .game-button.doom-game { background-image: url('https://qottlebup.nekoweb.org/doom-doom-guy.gif'); }
+      .game-button.Miku-game { background-image: url('https://qottlebup.nekoweb.org/IMG_4946.GIF'); }
+      .game-button.Fancy-game { background-image: url('https://qottlebup.nekoweb.org/pants.png'); }
+      .game-button.Monkey-game { background-image: url('https://qottlebup.nekoweb.org/Monkey.png'); }
+      .game-button.Wing-game { background-image: url('https://qottlebup.nekoweb.org/papas-wingeria.png'); }
+      .game-button.Acid-game { background-image: url('https://qottlebup.nekoweb.org/201455_7_sq.jpg'); }
+      .game-button.Acid2-game { background-image: url('https://qottlebup.nekoweb.org/acid-bunny-2.jpg'); }
+      .game-button.Cheese-game { background-image: url('https://qottlebup.nekoweb.org/papas-cheeseria.jpeg'); }
+      .game-button.Pizza-game { background-image: url('https://qottlebup.nekoweb.org/papas-pizzeria.png'); }
+      .game-button.Burger-game { background-image: url('https://qottlebup.nekoweb.org/papas-burgeria.png'); }
+      .game-button.Taco-game { background-image: url('https://qottlebup.nekoweb.org/tacomia.png'); }
+      .game-button.Alien-game { background-image: url('https://qottlebup.nekoweb.org/Alien_Hominid_cover.png'); }
+      .game-button.Touhou-game { background-image: url('https://qottlebup.nekoweb.org/create.png'); }
+      .game-button.Isaac-game { background-image: url('https://qottlebup.nekoweb.org/isac.png'); }
+      .game-button.shrimp-game { background-image: url('https://qottlebup.nekoweb.org/Mr._Incredible_-_Outfit_-_Fortnite.png'); }
+      .game-button.lack-game { background-image: url('https://qottlebup.nekoweb.org/Screenshot%202025-09-03%2012.47.28%20PM.png'); }
+      .game-button.lack2-game { background-image: url('https://qottlebup.nekoweb.org/Screenshot%202025-09-03%2012.47.37%20PM.png'); }
+      .game-button.rope-game { background-image: url('https://qottlebup.nekoweb.org/Om-nom.png'); }
+      .game-button.ngon-game { background-image: url('https://qottlebup.nekoweb.org/Screenshot%202025-09-05%207.48.16%20AM.png'); }
+      .game-button.garfield-game { background-image: url('https://qottlebup.nekoweb.org/Garfield_the_Cat.svg.png'); }
+      .game-button.man-game { background-image: url('https://qottlebup.nekoweb.org/man.png'); }
+      .game-button.joyride-game { background-image: url('https://qottlebup.nekoweb.org/Jetpack_Joyride_iOS.png'); }
+      .game-button.eagler-game { background-image: url('https://qottlebup.nekoweb.org/Eaglercraft.png'); }
+      .game-button.upgrade-game { background-image: url('https://qottlebup.nekoweb.org/JohnnyUpgrade_OG-logo.jpg'); }
+      .game-button.mario63-game { background-image: url('https://qottlebup.nekoweb.org/SM63Infobox.png'); }
+      .game-button.raft-game { background-image: url('https://qottlebup.nekoweb.org/hqdefault.jpg'); }
+      .game-button.raft2-game { background-image: url('https://qottlebup.nekoweb.org/maxresdefault.jpg'); }
+      .game-button.fnf-game { background-image: url('https://qottlebup.nekoweb.org/unnamed.png'); }
+      .game-button.halflife-game { background-image: url('https://qottlebup.nekoweb.org/6d8c1d_a2331d6227c5430b899d00e72493c461~mv2.png'); }
+      .game-button.nzp-game { background-image: url('https://qottlebup.nekoweb.org/91418801.png'); }
+      .game-button.run-game { background-image: url('https://qottlebup.nekoweb.org/Level_1_Run_1.png'); }
+      .game-button.run2-game { background-image: url('https://qottlebup.nekoweb.org/unname.png'); }
+      .game-button.run3-game { background-image: url('https://qottlebup.nekoweb.org/run-3.png'); }
+      .game-button.parappa-game { background-image: url('https://qottlebup.nekoweb.org/Sony-playstation-parappa-the-rapper.png'); }
+      .game-button.dadme-game { background-image: url('https://qottlebup.nekoweb.org/Dadnme.png'); }
+      .game-button.diedungeon-game { background-image: url('https://qottlebup.nekoweb.org/a4162538727_16.jpg'); }
+      .game-button.baldi-game { background-image: url('https://qottlebup.nekoweb.org/40BaldiSimilie.png'); }
+      .game-button.Nikki-game { background-image: url('https://qottlebup.nekoweb.org/header.jpg'); }
+      .game-button.quiz-game { background-image: url('https://qottlebup.nekoweb.org/the-impossible-quiz.png'); }
+      .game-button.tower-game { background-image: url('https://qottlebup.nekoweb.org/BigTowerTinySquare_OG-logo.jpg'); }
+      .game-button.tower2-game { background-image: url('https://qottlebup.nekoweb.org/BigTowerTinySquare2_OG-logo.jpg'); }
+      .game-button.shogun-game { background-image: url('https://qottlebup.nekoweb.org/cc42f87d9fa1283f13d33442ca47097264696741d003ce3d.png'); }
+      .game-button.wolfenstein-game { background-image: url('https://qottlebup.nekoweb.org/Wolfensein-3d.png'); }
+      .game-button.game1-img { background-image: url('https://placehold.co/160x80/007bff/ffffff?text=Game+1'); }
+      .game-button.game2-img { background-image: url('https://placehold.co/160x80/28a745/ffffff?text=Game+2'); }
+      .game-button.game3-img { background-image: url('https://placehold.co/160x80/dc3545/ffffff?text=Game+3'); }
+      .game-button.game4-img { background-image: url('https://placehold.co/160x80/ffc107/ffffff?text=Game+4'); }
+      .game-button.game5-img { background-image: url('https://placehold.co/160x80/17a2b8/ffffff?text=Game+5'); }
+      .game-button.game6-img { background-image: url('https://placehold.co/160x80/6c757d/ffffff?text=Game+6'); }
+      .game-button.game7-img { background-image: url('https://placehold.co/160x80/f8f9fa/343a40?text=Game+7'); }
+      .game-button.game8-img { background-image: url('https://placehold.co/160x80/6f42c1/ffffff?text=Game+8'); }
+      .game-button.game9-img { background-image: url('https://placehold.co/160x80/fd7e14/ffffff?text=Game+9'); }
+      .game-button.game10-img { background-image: url('https://placehold.co/160x80/20c997/ffffff?text=Game+10'); }
+
+      .game-button-text {
+        position: absolute;
+        bottom: 8px;
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 1rem;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+      }
+      
+      .page-indicator {
+        position: fixed;
+        bottom: 90px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 8px;
+        z-index: 101;
+      }
+
+      .page-dot {
+        width: 10px;
+        height: 10px;
+        background-color: #d8d4d1;
+        border: 2px solid #a4a2a0;
+        border-radius: 50%;
+      }
+
+      .page-dot.active {
+        background-color: #0087c0;
+        border-color: #005a80;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wii-top-bar"></div>
+    <div id="game-pages-container">
+      <div id="game-pages-wrapper">
+        <nav class="game-buttons" aria-label="Game navigation page 1">
+          <a data-href="https://nintenstation.vercel.app/" class="game-button mii-channel" title="EmulatorJS"><div class="speech-bubble">EmulatorJS</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/Roms.html" class="game-button photo-channel" title="Roms"><div class="speech-bubble">Roms</div><span class="game-button-text"></span></a>
+          <a data-href="https://www.autistici.org/burnedprojects/SAGE_19PLUS/" class="game-button wii-shop" title="Sage 2019 plus"><div class="speech-bubble">Sage 2019 plus</div><span class="game-button-text"></span></a>
+          <a data-href="https://www.autistici.org/burnedprojects/NoiseUpdate/" class="game-button blue forecast-channel" title="Pizza Tower"><div class="speech-bubble">Pizza Tower</div><span class="game-button-text"></span></a>
+          <a data-href="https://www.autistici.org/burnedprojects/SuperBoNoise/" class="game-button green news-channel" title="Super Bo Noise"><div class="speech-bubble">Super Bo Noise</div><span class="game-button-text"></span></a>
+          <a data-href="https://www.autistici.org/burnedprojects/UNDERTALE/" class="game-button super-bo-noise" title="Undertale"><div class="speech-bubble">Undertale</div><span class="game-button-text"></span></a>
+          <a data-href="https://smmskm.vercel.app/" class="game-button cave-story" title="Cave Story"><div class="speech-bubble">Cave Story</div><span class="game-button-text"></span></a>
+          <a data-href="https://www.autistici.org/burnedprojects/fnaf_allstars/" class="game-button fnaf-all-stars" title="Fnaf All Stars"><div class="speech-bubble">Fnaf All Stars</div><span class="game-button-text"></span></a>
+          <a data-href="https://smkartzx.vercel.app/" class="game-button mario-kart-zx" title="Super mario kart ZX"><div class="speech-bubble">Super mario kart ZX</div><span class="game-button-text"></span></a>
+          <a data-href="https://tynker.me/code/view/68487af7d2652e53a2339947/" class="game-button deltarune" title="Deltarune"><div class="speech-bubble">Deltarune</div><span class="game-button-text"></span></a>
+          <a data-href="https://webfishies.vercel.app/" class="game-button web-fishing" title="Web Fishing"><div class="speech-bubble">Web Fishing</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/Duck.html" class="game-button hotline-miami" title="Duck"><div class="speech-bubble">Duck</div><span class="game-button-text"></span></a>
+          <a data-href="https://slendybendy.vercel.app/" class="game-button slender" title="Slender"><div class="speech-bubble">Slender</div><span class="game-button-text"></span></a>
+          <a data-href="https://play.cpjourney.net/" class="game-button club-penguin" title="Club Penguin"><div class="speech-bubble">Club Penguin</div><span class="game-button-text"></span></a>
+          <a data-href="https://wamwoowam.co.uk/sonic4/" class="game-button sonic4" title="Sonic 4"><div class="speech-bubble">Sonic 4</div><span class="game-button-text"></span></a>
+          <a data-href="https://cookieclickerz.vercel.app/" class="game-button cookie-clicker" title="Cookie Clicker"><div class="speech-bubble">Cookie Clicker</div><span class="game-button-text"></span></a>
+          <a data-href="https://mariosixty.vercel.app/sm64/index.html" class="game-button super-mario-64" title="Super Mario 64"><div class="speech-bubble">Super Mario 64</div><span class="game-button-text"></span></a>
+          <a data-href="https://myveryownteardrop.xyz/" class="game-button my-teardrop" title="My Teardrop"><div class="speech-bubble">My Teardrop</div><span class="game-button-text"></span></a>
+          <a data-href="qottlebup.nekoweb.org/Ikachan.html" class="game-button ikachan-game" title="Ikachan"><div class="speech-bubble">Ikachan</div><span class="game-button-text"></span></a>
+          <a data-href="https://doomandtheotherdoom.vercel.app/" class="game-button doom-game" title="Doom and doom 2"><div class="speech-bubble">Doom and doom 2</div><span class="game-button-text"></span></a>
+        </nav>
+
+        <nav class="game-buttons" aria-label="Game navigation page 2">
+          <a data-href="https://chaz-99.nekoweb.org/Miku.html" class="game-button Miku-game" title="halfne miku studio"><div class="speech-bubble">halfne miku studio</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/fancypants.html" class="game-button Fancy-game" title="Fancy Pants Adventure 1"><div class="speech-bubble">Fancy Pants Adventure 1</div><span class="game-button-text"></span></a>
+          <a data-href="https://blamey.nekoweb.org/monkey-mart/" class="game-button Monkey-game" title="Monkey Mart"><div class="speech-bubble">Monkey Mart</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/papaswingeria.html" class="game-button Wing-game" title="Papa's Wingeria"><div class="speech-bubble">Papa's Wingeria</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/AcidBunny.html" class="game-button Acid-game" title="Acid Bunny"><div class="speech-bubble">Acid Bunny</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/acidbunny2.html" class="game-button Acid2-game" title="Acid Bunny 2"><div class="speech-bubble">Acid Bunny 2</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/cheese.html" class="game-button Cheese-game" title="Papa's Cheeseria"><div class="speech-bubble">Papa's Cheeseria</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/pizza.html" class="game-button Pizza-game" title="Papa's Pizzeria"><div class="speech-bubble">Papa's Pizzeria</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/burger.html" class="game-button Burger-game" title="Papa's Burgeria"><div class="speech-bubble">Papa's Burgeria</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/taco.html" class="game-button Taco-game" title="Papa's Taco Mia"><div class="speech-bubble">Papa's Taco Mia</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/isaac.html" class="game-button Isaac-game" title="The binding of isaac"><div class="speech-bubble">The binding of isaac</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/alien.html" class="game-button Alien-game" title="Alien Hominid"><div class="speech-bubble">Alien Hominid</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/touhou.html" class="game-button Touhou-game" title="touhou character creator"><div class="speech-bubble">touhou character creator</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/QCOV7445.MP4" class="game-button shrimp-game" title="the shrimpcredibals"><div class="speech-bubble">the shrimpcredibals</div><span class="game-button-text"></span></a>
+          <a data-href="https://littlealchemy.com/" class="game-button lack-game" title="Little alchemy"><div class="speech-bubble">Little alchemy</div><span class="game-button-text"></span></a>
+          <a data-href="https://littlealchemy2.com/" class="game-button lack2-game" title="Little alchemy 2"><div class="speech-bubble">Little alchemy 2</div><span class="game-button-text"></span></a>
+          <a data-href="https://cuttherope.vercel.app/" class="game-button rope-game" title="Cut the rope"><div class="speech-bubble">Cut the rope</div><span class="game-button-text"></span></a>
+          <a data-href="https://valsamisphysics.com/sidescroller/index.html" class="game-button ngon-game" title="N-Gon"><div class="speech-bubble">N-Gon</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/Garfield.html" class="game-button garfield-game" title="Garfield Comic Creator"><div class="speech-bubble">Garfield Comic Creator</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/Little%20Man%20Legends.html" class="game-button man-game" title="Little Man Legends"><div class="speech-bubble">Little Man Legends</div><span class="game-button-text"></span></a>
+        </nav>
+
+        <nav class="game-buttons" aria-label="Game navigation page 3">
+          <a data-href="https://blamey.nekoweb.org/jetpack-joyride/" class="game-button joyride-game" title="JetPacj Joyride"><div class="speech-bubble">JetPacj Joyride</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/Eaglercraft_1.12_Offline_en_US.html" class="game-button eagler-game" title="Eaglercraft"><div class="speech-bubble">Eaglercraft</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/JonnyUpgrade.html" class="game-button upgrade-game" title="Johnny upgrade"><div class="speech-bubble">Johnny upgrade</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/sm63.html" class="game-button mario63-game" title="Super mario 63"><div class="speech-bubble">Super mario 63</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/raftwars.html" class="game-button raft-game" title="Raft Wars"><div class="speech-bubble">Raft Wars</div><span class="game-button-text"></span></a>
+          <a data-href="https://chaz-99.nekoweb.org/raftwars2.html" class="game-button raft2-game" title="Raft Wars 2"><div class="speech-bubble">Raft Wars 2</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/clfridaynightfunkin.html" class="game-button fnf-game" title="Friday night funkin"><div class="speech-bubble">Friday night funkin</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/clhalflife.html" class="game-button halflife-game" title="Half-Life"><div class="speech-bubble">Half-Life</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/clnzp.html" class="game-button nzp-game" title="NZP"><div class="speech-bubble">NZP</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/clrun.html" class="game-button run-game" title="Run 1"><div class="speech-bubble">Run 1</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/clburritobison.html" class="game-button run2-game" title="Burrito Bison"><div class="speech-bubble">Burrito Bison</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/clrun3.html" class="game-button run3-game" title="Run 3"><div class="speech-bubble">Run 3</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/clparappatherapper.html" class="game-button parappa-game" title="Parappa the rapper"><div class="speech-bubble">Parappa the rapper</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/cldadnme.html" class="game-button dadme-game" title="Dad n me"><div class="speech-bubble">Dad n me</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/cldieinthedungeon.html" class="game-button diedungeon-game" title="Die in the dungeon"><div class="speech-bubble">Die in the dungeon</div><span class="game-button-text"></span></a>
+          <a data-href="https://blamey.nekoweb.org/baldi" class="game-button baldi-game" title="Baldi's Basics"><div class="speech-bubble">Baldi's Basics</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/clyumenikki.html" class="game-button Nikki-game" title="Yume Nikki"><div class="speech-bubble">Yume Nikki</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/climpossiblequiz.html" class="game-button quiz-game" title="The Impossible quiz"><div class="speech-bubble">The Impossible quiz</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/clbigicetowertinysquare.html" class="game-button tower-game" title="Big tower tiny square"><div class="speech-bubble">Big tower tiny square</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/clbtts2.html" class="game-button tower2-game" title="Big tower tiny square 2"><div class="speech-bubble">Big tower tiny square 2</div><span class="game-button-text"></span></a>
+        </nav>
+
+        <nav class="game-buttons" aria-label="Game navigation page 4">
+          <a data-href="https://qottlebup.nekoweb.org/clshogunshowdown.html" class="game-button shogun-game" title="shogun showdown"><div class="speech-bubble">shogun showdown</div><span class="game-button-text"></span></a>
+          <a data-href="https://qottlebup.nekoweb.org/clwolfenstein.html" class="game-button wolfenstein-game" title="wolfenstein 3d"><div class="speech-bubble">wolfenstein 3d</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game3-img" title="Game 44"><div class="speech-bubble">Game 44</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game4-img" title="Game 45"><div class="speech-bubble">Game 45</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game5-img" title="Game 46"><div class="speech-bubble">Game 46</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game6-img" title="Game 47"><div class="speech-bubble">Game 47</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game7-img" title="Game 48"><div class="speech-bubble">Game 48</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game8-img" title="Game 49"><div class="speech-bubble">Game 49</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game9-img" title="Game 50"><div class="speech-bubble">Game 50</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game10-img" title="Game 51"><div class="speech-bubble">Game 51</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game1-img" title="Game 52"><div class="speech-bubble">Game 52</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game2-img" title="Game 53"><div class="speech-bubble">Game 53</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game3-img" title="Game 54"><div class="speech-bubble">Game 54</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game4-img" title="Game 55"><div class="speech-bubble">Game 55</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game5-img" title="Game 56"><div class="speech-bubble">Game 56</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game6-img" title="Game 57"><div class="speech-bubble">Game 57</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game7-img" title="Game 58"><div class="speech-bubble">Game 58</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game8-img" title="Game 59"><div class="speech-bubble">Game 59</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game9-img" title="Game 60"><div class="speech-bubble">Game 60</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game10-img" title="Game 61"><div class="speech-bubble">Game 61</div><span class="game-button-text"></span></a>
+        </nav>
+
+        <nav class="game-buttons" aria-label="Game navigation page 5">
+          <a data-href="#" class="game-button game1-img" title="Game 62"><div class="speech-bubble">Game 62</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game2-img" title="Game 63"><div class="speech-bubble">Game 63</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game3-img" title="Game 64"><div class="speech-bubble">Game 64</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game4-img" title="Game 65"><div class="speech-bubble">Game 65</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game5-img" title="Game 66"><div class="speech-bubble">Game 66</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game6-img" title="Game 67"><div class="speech-bubble">Game 67</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game7-img" title="Game 68"><div class="speech-bubble">Game 68</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game8-img" title="Game 69"><div class="speech-bubble">Game 69</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game9-img" title="Game 70"><div class="speech-bubble">Game 70</div><span class="game-button-text"></span></a>
+          <a data-href="#" class="game-button game10-img" title="Game 71"><div class="speech-bubble">Game 71</div><span class="game-button-text"></span></a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="page-indicator" id="page-indicator-dots"></div>
+
+    <div class="wii-bottom-bar">
+      <div class="wii-bottom-bar-content">
+        <div class="wii-button" id="prev-page-button">
+          <img src="https://qottlebup.nekoweb.org/nope.svg" alt="Previous Page" />
+        </div>
+        <a href="https://qottlebup.nekoweb.org/Extras.html" class="wii-button" id="wii-menu-button">
+          <img src="https://qottlebup.nekoweb.org/Plus.svg" alt="Wii Menu" />
+        </a>
+        <div class="wii-date-time">
+          <div class="time" id="current-time">12:00 AM</div>
+          <div class="date" id="current-date">Fri 1/1</div>
+        </div>
+        <div class="wii-button" id="dark-mode-toggle" title="Toggle Dark Mode">
+          <img src="https://qottlebup.nekoweb.org/mode.svg" alt="Toggle Dark Mode" id="dark-mode-icon" />
+        </div>
+        <div class="wii-button" id="next-page-button">
+          <img src="https://qottlebup.nekoweb.org/move.svg" alt="Next Page" />
+        </div>
+      </div>
+    </div>
+
+    <div id="joke-container" style="position:fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 200; display: none; text-align: center; max-width: 80%; font-size: 1.2rem; border: 2px solid #a4a2a0;">
+      <p id="joke-text"></p>
+      <button onclick="document.getElementById('joke-container').style.display = 'none';" style="margin-top: 15px; padding: 8px 16px; font-size: 1rem; cursor: pointer; background-color: #d8d4d1; border: 2px solid #a4a2a0; border-radius: 5px;">Close</button>
+    </div>
+
+    <audio id="bg-music"></audio>
+    <audio id="hover-sound" src="https://qottlebup.nekoweb.org/Sample_0004.wav" preload="auto"></audio>
+    <audio id="click-sound" src="https://qottlebup.nekoweb.org/Sample_0000.wav" preload="auto"></audio>
+    <audio id="back-zoom-sound" src="https://qottlebup.nekoweb.org/Sample_0001.wav" preload="auto"></audio>
+    <audio id="prev-page-sound" src="https://qottlebup.nekoweb.org/WSD-SELECT.wav" preload="auto"></audio>
+    <audio id="next-page-sound" src="https://qottlebup.nekoweb.org/WSD-SELECT.wav" preload="auto"></audio>
+    <script>
+      const bgMusic = document.getElementById('bg-music');
+      const hoverSound = document.getElementById('hover-sound');
+      const clickSound = document.getElementById('click-sound');
+      const prevPageSound = document.getElementById('prev-page-sound');
+      const nextPageSound = document.getElementById('next-page-sound');
+      const buttons = document.querySelectorAll('.game-button');
+      const currentTimeElement = document.getElementById('current-time');
+      const currentDateElement = document.getElementById('current-date');
+      const prevPageButton = document.getElementById('prev-page-button');
+      const nextPageButton = document.getElementById('next-page-button');
+      const pageIndicatorDots = document.getElementById('page-indicator-dots');
+
+      const gamePages = document.querySelectorAll('.game-buttons');
+      const gamePagesWrapper = document.getElementById('game-pages-wrapper');
+      let currentPage = 0;
+
+      // New JavaScript for the bottom bar buttons
+      const wiiMenuButton = document.getElementById('wii-menu-button');
+      const jokeContainer = document.getElementById('joke-container');
+      const jokeText = document.getElementById('joke-text');
+      const darkModeToggle = document.getElementById('dark-mode-toggle');
+      const darkModeIcon = document.getElementById('dark-mode-icon');
+
+     
+      
+      // Add event listeners for the new buttons
+      wiiMenuButton.addEventListener('click', () => {
+        clickSound.currentTime = 0;
+        clickSound.play().catch(() => {});
+      });
+
+      // Dark mode toggle logic
+      function setDarkMode(enabled) {
+        if (enabled) {
+          document.body.classList.add('dark-mode');
+          darkModeIcon.src = 'https://qottlebup.nekoweb.org/moon.svg';
+          darkModeIcon.alt = 'Light Mode';
+          localStorage.setItem('darkMode', 'enabled');
+        } else {
+          document.body.classList.remove('dark-mode');
+          darkModeIcon.src = 'https://qottlebup.nekoweb.org/sun.svg';
+          darkModeIcon.alt = 'Dark Mode';
+          localStorage.setItem('darkMode', 'disabled');
+        }
+      }
+
+      darkModeToggle.addEventListener('click', () => {
+        clickSound.currentTime = 0;
+        clickSound.play().catch(() => {});
+        const isDark = document.body.classList.contains('dark-mode');
+        setDarkMode(!isDark);
+      });
+
+      // Check saved preference on load
+      window.addEventListener('load', () => {
+        const savedMode = localStorage.getItem('darkMode');
+        if (savedMode === 'enabled') {
+          setDarkMode(true);
+        } else {
+          setDarkMode(false);
+        }
+      });
+
+      // Existing code...
+      const songs = [
+        {
+          name: 'Wii Menu',
+          url: 'https://qottlebup.nekoweb.org/Wii%20menu.wav',
+        },
+      ];
+
+      function getRandomSongIndex(excludeIndex) {
+        let newIndex;
+        do {
+          newIndex = Math.floor(Math.random() * songs.length);
+        } while (newIndex === excludeIndex && songs.length > 1);
+        return newIndex;
+      }
+
+      function playSong(index) {
+        if (index < 0 || index >= songs.length) return;
+        bgMusic.src = songs[index].url;
+        bgMusic.play().catch(() => {
+          function enableAudio() {
+            bgMusic.play();
+            document.removeEventListener('click', enableAudio);
+            document.removeEventListener('keydown', enableAudio);
+          }
+          document.addEventListener('click', enableAudio);
+          document.addEventListener('keydown', enableAudio);
+        });
+        bgMusic.currentSongIndex = index;
+      }
+
+      bgMusic.addEventListener('ended', () => {
+        const nextIndex = getRandomSongIndex(bgMusic.currentSongIndex);
+        playSong(nextIndex);
+      });
+
+      function updateDateTime() {
+        const now = new Date();
+        const optionsTime = {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        };
+        const optionsDate = {
+          weekday: 'short',
+          month: 'numeric',
+          day: 'numeric',
+        };
+        currentTimeElement.textContent = now.toLocaleTimeString('en-US', optionsTime);
+        currentDateElement.textContent = now.toLocaleDateString('en-US', optionsDate);
+      }
+
+      buttons.forEach((button) => {
+        button.addEventListener('mouseenter', () => {
+          hoverSound.currentTime = 0;
+          hoverSound.play().catch(() => {});
+        });
+
+        button.addEventListener('click', (event) => {
+          event.preventDefault(); 
+          clickSound.currentTime = 0;
+          clickSound.play().catch(() => {});
+          buttons.forEach(btn => btn.classList.remove('selected'));
+          button.classList.add('selected');
+
+          const url = button.dataset.href;
+          if (url) {
+            setTimeout(() => {
+              window.location.href = url;
+            }, 200); 
+          }
+        });
+      });
+      
+      // Page switching logic
+      function updatePage() {
+          const offset = -currentPage * 100;
+          gamePagesWrapper.style.transform = `translateX(${offset}%)`;
+          
+          updatePaginationDots();
+          updatePaginationButtons();
+      }
+
+      function updatePaginationDots() {
+          pageIndicatorDots.innerHTML = '';
+          for (let i = 0; i < gamePages.length; i++) {
+              const dot = document.createElement('div');
+              dot.classList.add('page-dot');
+              if (i === currentPage) {
+                  dot.classList.add('active');
+              }
+              pageIndicatorDots.appendChild(dot);
+          }
+      }
+
+      function updatePaginationButtons() {
+          if (currentPage === 0) {
+              prevPageButton.classList.add('disabled');
+          } else {
+              prevPageButton.classList.remove('disabled');
+          }
+          if (currentPage === gamePages.length - 1) {
+              nextPageButton.classList.add('disabled');
+          } else {
+              nextPageButton.classList.remove('disabled');
+          }
+      }
+
+      prevPageButton.addEventListener('click', () => {
+          if (currentPage > 0) {
+              currentPage--;
+              updatePage();
+              prevPageSound.currentTime = 0;
+              prevPageSound.play().catch(() => {});
+          }
+      });
+
+      nextPageButton.addEventListener('click', () => {
+          if (currentPage < gamePages.length - 1) {
+              currentPage++;
+              updatePage();
+              nextPageSound.currentTime = 0;
+              nextPageSound.play().catch(() => {});
+          }
+      });
+
+      window.addEventListener('load', () => {
+        playSong(getRandomSongIndex(-1));
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        updatePage();
+      });
+    </script>
+  </body>
+</html>

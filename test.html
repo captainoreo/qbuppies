@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QottleBup</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: 'PopHappiness', 'Arial', sans-serif;
+        background-color: #e6e8e7;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><rect width="10" height="10" fill="%23e6e8e7"/><path d="M 5 0 L 5 10" stroke="%23d6d8d7" stroke-width="1"/></svg>');
+        color: black;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        align-items: center;
+        padding: 4rem 1rem;
+        box-sizing: border-box;
+        cursor: url('cursor.png'), auto;
+        overflow-x: hidden;
+        transition: background-color 0.4s ease, color 0.4s ease;
+      }
+
+      /* Dark mode styles */
+      body.dark-mode {
+        background-color: #121212;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><rect width="10" height="10" fill="%23121212"/><path d="M 5 0 L 5 10" stroke="%23333333" stroke-width="1"/></svg>');
+        color: #ddd;
+        cursor: url('cursor-dark.png'), auto;
+      }
+
+      @font-face {
+        font-family: 'PopHappiness';
+        src: url('https://qottlebup.nekoweb.org/PopHappiness.OTF') format('opentype');
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      .wii-top-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100px;
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.8) 0%,
+          rgba(255, 255, 255, 0) 100%
+        );
+        pointer-events: none;
+        z-index: 100;
+        transition: background 0.4s ease;
+      }
+      body.dark-mode .wii-top-bar {
+        background: linear-gradient(
+          to bottom,
+          rgba(18, 18, 18, 0.9) 0%,
+          rgba(18, 18, 18, 0) 100%
+        );
+      }
+
+      .wii-bottom-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 80px;
+        background-color: #c9c5c2;
+        border-top: 2px solid #a4a2a0;
+        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        padding: 0 20px;
+        box-sizing: border-box;
+        z-index: 100;
+        transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+      }
+      body.dark-mode .wii-bottom-bar {
+        background-color: #222;
+        border-top: 2px solid #555;
+        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.8);
+      }
+
+      .wii-bottom-bar-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: 900px;
+      }
+
+      .wii-button {
+        background-color: #d8d4d1;
+        border: 2px solid #a4a2a0;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition:
+          transform 0.1s ease,
+          box-shadow 0.1s ease,
+          background-color 0.4s ease,
+          border-color 0.4s ease;
+      }
+      body.dark-mode .wii-button {
+        background-color: #3a3a3a;
+        border-color: #666;
+      }
+
+      .wii-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 8px rgba(0, 161, 223, 0.4);
+      }
+
+      .wii-button img {
+        width: 70%;
+        height: auto;
+        filter: invert(0);
+        transition: filter 0.4s ease;
+      }
+      body.dark-mode .wii-button img {
+        filter: invert(1);
+      }
+
+      .wii-date-time {
+        font-size: 1rem;
+        text-align: center;
+        color: #555;
+        user-select: none;
+        transition: color 0.4s ease;
+      }
+      body.dark-mode .wii-date-time {
+        color: #aaa;
+      }
+      .wii-date-time .time {
+        font-size: 1.5rem;
+      }
+
+      /* Other styles unchanged from original */
+      .game-buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        max-width: 900px;
+        width: 100%;
+        justify-items: center;
+        padding: 20px;
+        box-sizing: border-box;
+        position: fixed;
+        z-index: 10;
+        padding-bottom: 120px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .game-button {
+        width: 160px;
+        height: 80px;
+        background-color: #f7f7f7;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: black;
+        font-weight: bold;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        cursor: url('cursor.png'), auto;
+        transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+      }
+      body.dark-mode .game-button {
+        background-color: #2a2a2a;
+        color: #ddd;
+        box-shadow: 0 4px 12px rgba(0, 161, 223, 0.8);
+      }
+      .game-button:hover,
+      .game-button:focus {
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(0, 161, 223, 0.7);
+        outline: none;
+        cursor: url('Link-Select.png'), pointer;
+      }
+
+      .game-button:active {
+        transform: scale(1);
+        box-shadow: 0 0 8px rgba(0, 161, 223, 0.4);
+      }
+
+      .game-button.selected {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(0, 161, 223, 0.9);
+      }
+
+      .game-button.large {
+        grid-column: span 2;
+        width: 340px;
+      }
+
+      .game-button.special {
+        color: white;
+      }
+
+      /* Background images for game buttons unchanged */
+
+      .game-button-text {
+        position: absolute;
+        bottom: 8px;
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 1rem;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Responsive */
+      @media (max-width: 600px) {
+        .game-buttons {
+          grid-template-columns: repeat(2, 1fr);
+          padding-bottom: 140px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wii-top-bar"></div>
+    <nav class="game-buttons" aria-label="Game navigation">
+      <!-- Game buttons as before -->
+      <a data-href="https://nintenstation.vercel.app/" class="game-button mii-channel" title="EmulatorJS">
+        <span class="game-button-text"></span>
+      </a>
+      <a data-href="https://qottlebup.nekoweb.org/Roms.html" class="game-button photo-channel" title="Roms">
+        <span class="game-button-text"></span>
+      </a>
+      <a data-href="https://www.autistici.org/burnedprojects/SAGE_19PLUS/" class="game-button wii-shop" title="Sage 2019 plus">
+        <span class="game-button-text"></span>
+      </a>
+      <!-- ... other game buttons ... -->
+    </nav>
+
+    <div class="wii-bottom-bar">
+      <div class="wii-bottom-bar-content">
+        <!-- Wii Menu button will toggle light/dark mode -->
+        <button class="wii-button" id="wii-menu-button" aria-label="Toggle light and dark mode" title="Toggle Light/Dark Mode" type="button">
+          <img src="https://qottlebup.nekoweb.org/Plus.svg" alt="Toggle Dark Mode" />
+        </button>
+        <div class="wii-date-time" aria-live="polite" aria-atomic="true">
+          <div class="time" id="current-time">12:00 AM</div>
+          <div class="date" id="current-date">Fri 1/1</div>
+        </div>
+        <div class="wii-button" id="mail-button" role="button" tabindex="0" aria-label="Show joke" title="Show a joke">
+          <img src="https://qottlebup.nekoweb.org/Mail.svg" alt="Mail" />
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="joke-container"
+      style="
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        z-index: 200;
+        display: none;
+        text-align: center;
+        max-width: 80%;
+        font-size: 1.2rem;
+        border: 2px solid #a4a2a0;
+      "
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="joke-text"
+    >
+      <p id="joke-text"></p>
+      <button
+        onclick="document.getElementById('joke-container').style.display = 'none';"
+        style="
+          margin-top: 15px;
+          padding: 8px 16px;
+          font-size: 1rem;
+          cursor: pointer;
+          background-color: #d8d4d1;
+          border: 2px solid #a4a2a0;
+          border-radius: 5px;
+        "
+        aria-label="Close joke dialog"
+      >
+        Close
+      </button>
+    </div>
+
+    <audio id="bg-music" preload="auto" loop></audio>
+    <audio id="hover-sound" src="https://qottlebup.nekoweb.org/Sample_0004.wav" preload="auto"></audio>
+    <audio id="click-sound" src="https://qottlebup.nekoweb.org/Sample_0000.wav" preload="auto"></audio>
+    <audio id="back-zoom-sound" src="https://qottlebup.nekoweb.org/Sample_0001.wav" preload="auto"></audio>
+
+    <script>
+      const bgMusic = document.getElementById('bg-music');
+      const hoverSound = document.getElementById('hover-sound');
+      const clickSound = document.getElementById('click-sound');
+      const buttons = document.querySelectorAll('.game-button');
+      const currentTimeElement = document.getElementById('current-time');
+      const currentDateElement = document.getElementById('current-date');
+
+      const wiiMenuButton = document.getElementById('wii-menu-button');
+      const mailButton = document.getElementById('mail-button');
+      const jokeContainer = document.getElementById('joke-container');
+      const jokeText = document.getElementById('joke-text');
+
+      // Jokes array
+      const jokes = [
+        "Why don't scientists trust atoms? Because they make up everything!",
+        "Did you hear about the restaurant on the moon? Great food, no atmosphere.",
+        "Why did the scarecrow win an award? Because he was outstanding in his field!",
+        "I'm reading a book on anti-gravity. It's impossible to put down!",
+        "Why don't skeletons fight each other? They don't have the guts.",
+        "What do you call a fake noodle? An impasta.",
+        "Why did the bicycle fall over? Because it was two tired!",
+        "What do you get when you cross a snowman and a vampire? Frostbite.",
+        "What's a vampire's favorite fruit? A nectarine."
+      ];
+
+      function showRandomJoke() {
+        const randomIndex = Math.floor(Math.random() * jokes.length);
+        jokeText.textContent = jokes[randomIndex];
+        jokeContainer.style.display = 'block';
+      }
+
+      // Toggle light/dark mode on Wii Menu button click
+      wiiMenuButton.addEventListener('click', () => {
+        clickSound.currentTime = 0;
+        clickSound.play().catch(() => {});
+        document.body.classList.toggle('dark-mode');
+      });
+
+      mailButton.addEventListener('click', () => {
+        clickSound.currentTime = 0;
+        clickSound.play().catch(() => {});
+        showRandomJoke();
+      });
+
+      // Play hover sound on game-button mouseenter
+      buttons.forEach((button) => {
+        button.addEventListener('mouseenter', () => {
+          hoverSound.currentTime = 0;
+          hoverSound.play().catch(() => {});
+        });
+        button.addEventListener('click', (event) => {
+          event.preventDefault();
+          clickSound.currentTime = 0;
+          clickSound.play().catch(() => {});
+          buttons.forEach((btn) => btn.classList.remove('selected'));
+          button.classList.add('selected');
+
+          const url = button.dataset.href;
+          if (url) {
+            setTimeout(() => {
+              window.location.href = url;
+            }, 200);
+          }
+        });
+      });
+
+      // Songs list
+      const songs = [
+        {
+          name: 'Nintendo Wii U - Mii Maker Editing Mii (TV + Gamepad)',
+          url: 'https://qottlebup.nekoweb.org/Nintendo%20Wii%20U%20-%20Mii%20Maker%20Editing%20Mii%20(TV%20+%20Gamepad).mp3',
+        },
+        {
+          name: 'Everybody votes channel theme',
+          url: 'https://qottlebup.nekoweb.org/Main%20Theme%20-%20The%20Everybody%20Votes%20Channel.mp3',
+        },
+        {
+          name: 'Homebrew channel theme',
+          url: 'https://qottlebup.nekoweb.org/Wii%20Homebrew%20Channel%20OST_%20Main%20Theme.mp3',
+        },
+        {
+          name: 'Wii Sports main menu',
+          url: 'https://qottlebup.nekoweb.org/Wii%20Sports%20OST_%20Main%20Menu.mp3',
+        },
+        {
+          name: 'Main Menu mario kart wii',
+          url: 'https://qottlebup.nekoweb.org/Main%20Menu%20-%20Mario%20Kart%20Wii.mp3',
+        },
+      ];
+
+      function getRandomSongIndex(excludeIndex) {
+        let newIndex;
+        do {
+          newIndex = Math.floor(Math.random() * songs.length);
+        } while (newIndex === excludeIndex && songs.length > 1);
+        return newIndex;
+      }
+
+      function playSong(index) {
+        if (index < 0 || index >= songs.length) return;
+        bgMusic.src = songs[index].url;
+        bgMusic.volume = 0.2;
+        bgMusic.play().catch(() => {
+          function enableAudio() {
+            bgMusic.play();
+            document.removeEventListener('click', enableAudio);
+            document.removeEventListener('keydown', enableAudio);
+          }
+          document.addEventListener('click', enableAudio);
+          document.addEventListener('keydown', enableAudio);
+        });
+        bgMusic.currentSongIndex = index;
+      }
+
+      bgMusic.addEventListener('ended', () => {
+        const nextIndex = getRandomSongIndex(bgMusic.currentSongIndex);
+        playSong(nextIndex);
+      });
+
+      function updateDateTime() {
+        const now = new Date();
+        const optionsTime = {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        };
+        const optionsDate = {
+          weekday: 'short',
+          month: 'numeric',
+          day: 'numeric',
+        };
+        currentTimeElement.textContent = now.toLocaleTimeString('en-US', optionsTime);
+        currentDateElement.textContent = now.toLocaleDateString('en-US', optionsDate);
+      }
+
+      window.addEventListener('load', () => {
+        playSong(getRandomSongIndex(-1));
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+      });
+    </script>
+  </body>
+</html>
